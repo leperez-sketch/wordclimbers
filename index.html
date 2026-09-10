@@ -22,7 +22,7 @@
             color: #fff;
         }
 
-        /* BARRA SUPERIOR DE CONTROL Y TIMER */
+        /* BARRA SUPERIOR DE CONTROL */
         #top-bar {
             position: absolute;
             top: 0;
@@ -38,15 +38,35 @@
             z-index: 100;
         }
 
+        /* CONTADOR GRANDE CENTRADO EN LA MITAD DEL TABLERO */
         .timer-box {
-            font-size: 2rem;
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2.8rem;
             font-weight: 900;
-            color: #f59e0b;
-            background: #1e293b;
-            padding: 4px 20px;
-            border-radius: 30px;
-            border: 2px solid #f59e0b;
-            box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+            color: #ef4444; /* Números rojos */
+            background: rgba(15, 23, 42, 0.9);
+            padding: 2px 24px;
+            border-radius: 20px;
+            border: 3px solid #ef4444;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+            backdrop-filter: blur(8px);
+            z-index: 150;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+        }
+
+        /* ANIMACIÓN DE ALERTA PARA ÚLTIMOS 10 SEGUNDOS */
+        .timer-box.warning {
+            animation: pulse-alert 0.5s infinite alternate;
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        @keyframes pulse-alert {
+            0% { transform: translateX(-50%) scale(1); box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); }
+            100% { transform: translateX(-50%) scale(1.15); box-shadow: 0 0 35px rgba(239, 68, 68, 1); }
         }
 
         .start-btn {
@@ -195,19 +215,39 @@
         .block-btn:active { transform: scale(0.94); }
         .block-btn.wrong { background: #ef4444 !important; color: white; }
 
-        /* PERSONAJE ESCALADOR */
+        /* PERSONAJE ESCALADOR Y ANIMACIONES */
         .climber {
             position: absolute;
             font-size: 3.5rem;
             bottom: 2vh;
             left: 20px;
             z-index: 20;
-            transition: transform 0.4s ease, bottom 0.4s ease;
+            transition: transform 0.3s ease, bottom 0.4s ease;
             filter: drop-shadow(0 6px 6px rgba(0,0,0,0.6));
             pointer-events: none;
+            display: inline-block;
         }
 
-        /* PANELES DE GAME OVER Y MENÚS */
+        .climber.happy-anim {
+            animation: bounce-happy 0.6s ease forwards;
+        }
+
+        .climber.sad-anim {
+            animation: shake-sad 0.6s ease forwards;
+        }
+
+        @keyframes bounce-happy {
+            0%, 100% { transform: scale(1) translateY(0); }
+            50% { transform: scale(1.4) translateY(-20px) rotate(10deg); }
+        }
+
+        @keyframes shake-sad {
+            0%, 100% { transform: translateX(0) scale(1); }
+            20%, 60% { transform: translateX(-15px) scale(0.9) rotate(-10deg); }
+            40%, 80% { transform: translateX(15px) scale(0.9) rotate(10deg); }
+        }
+
+        /* OVERLAY FINAL */
         .overlay {
             position: absolute;
             inset: 0;
@@ -230,11 +270,11 @@
     <!-- AUDIO DE FONDO -->
     <audio id="bg-music" src="niknet.mp3" loop></audio>
 
-    <!-- BARRA DE CONTROL -->
+    <!-- BARRA DE CONTROL Y TIMER CENTRADO -->
     <div id="top-bar">
         <div style="font-size: 1.2rem; font-weight: 800;">🏔️ TOWER CLIMBER</div>
+        <div class="timer-box" id="timer-display">2:00</div>
         <button id="mute-btn" class="mute-btn" onclick="toggleMute()">🔊</button>
-        <div class="timer-box" id="timer-display">⏱️ 60s</div>
         <button class="start-btn" id="start-btn" onclick="startGame()">▶️ INICIAR CARRERA</button>
     </div>
 
@@ -384,10 +424,11 @@
             { q: "Word meaning 'very hungry':", options: ["Starving", "Thirsty", "Sleepy", "Tired"], correct: "Starving" }
         ];
 
-        // SINTETIZADOR DE SONIDO (Web Audio API)
+        // SINTETIZADOR DE SONIDOS Y FANFARRIA (Web Audio API)
         class SoundFX {
             constructor() { this.ctx = null; }
             init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+            
             playCorrect() {
                 this.init(); if (!this.ctx) return;
                 const now = this.ctx.currentTime;
@@ -401,6 +442,7 @@
                 osc.connect(gain); gain.connect(this.ctx.destination);
                 osc.start(now); osc.stop(now + 0.25);
             }
+
             playWrong() {
                 this.init(); if (!this.ctx) return;
                 const now = this.ctx.currentTime;
@@ -414,18 +456,55 @@
                 osc.connect(gain); gain.connect(this.ctx.destination);
                 osc.start(now); osc.stop(now + 0.25);
             }
+
+            playWarning() {
+                this.init(); if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(880, now); // Bip agudo de alerta
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(now); osc.stop(now + 0.12);
+            }
+
+            // Fanfarria de Trompetas
+            playTrumpetFanfare() {
+                this.init(); if (!this.ctx) return;
+                const notes = [
+                    { f: 523.25, t: 0.0, d: 0.15 },  // C5
+                    { f: 659.25, t: 0.15, d: 0.15 }, // E5
+                    { f: 783.99, t: 0.30, d: 0.15 }, // G5
+                    { f: 1046.50, t: 0.45, d: 0.70 } // C6 (larga)
+                ];
+                const now = this.ctx.currentTime;
+                notes.forEach(n => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle'; // Tono metálico suave similar a trompeta
+                    osc.frequency.setValueAtTime(n.f, now + n.t);
+                    gain.gain.setValueAtTime(0.3, now + n.t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.d);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(now + n.t);
+                    osc.stop(now + n.t + n.d);
+                });
+            }
         }
+
         const sfx = new SoundFX();
         const bgMusic = document.getElementById('bg-music');
 
         // ESTADO GLOBAL
-        let timeLeft = 60;
+        let timeLeft = 120; // 2 Minutos
         let gameTimer = null;
         let isGameActive = false;
 
         const teamData = {
-            left: { score: 0, deck: [], floorHeightVh: 18 },
-            right: { score: 0, deck: [], floorHeightVh: 18 }
+            left: { score: 0, deck: [], floorHeightVh: 18, defaultEmoji: '🥶', happyEmoji: '😄', sadEmoji: '😭' },
+            right: { score: 0, deck: [], floorHeightVh: 18, defaultEmoji: '🥵', happyEmoji: '🥳', sadEmoji: '😵' }
         };
 
         // MEZCLAR ARRAY
@@ -437,6 +516,13 @@
         function toggleMute() {
             bgMusic.muted = !bgMusic.muted;
             document.getElementById('mute-btn').innerText = bgMusic.muted ? '🔇' : '🔊';
+        }
+
+        // FORMATO DE TIEMPO (2:00)
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
         }
 
         // INICIALIZAR EQUIPO
@@ -455,6 +541,8 @@
             }
 
             const climber = document.getElementById(`climber-${side}`);
+            climber.innerText = team.defaultEmoji;
+            climber.className = 'climber';
             climber.style.bottom = "2vh";
         }
 
@@ -489,10 +577,11 @@
             track.appendChild(floorEl);
         }
 
-        // MANEJO DE TAP
+        // MANEJO DE TAP CON ANIMACIÓN DE EMOJI
         function handleTap(side, floorNum, selectedOpt, correctOpt, btnEl) {
             if (!isGameActive) return;
             const team = teamData[side];
+            const climber = document.getElementById(`climber-${side}`);
 
             if (floorNum !== team.score + 1) return;
 
@@ -501,12 +590,19 @@
                 team.score++;
                 document.getElementById(`score-${side}`).innerText = team.score;
 
+                // Animación Emoji Feliz
+                climber.innerText = team.happyEmoji;
+                climber.classList.remove('happy-anim', 'sad-anim');
+                void climber.offsetWidth; // Trigger reflow
+                climber.classList.add('happy-anim');
+                
+                setTimeout(() => {
+                    climber.innerText = team.defaultEmoji;
+                    climber.classList.remove('happy-anim');
+                }, 600);
+
                 const track = document.getElementById(`track-${side}`);
                 track.style.transform = `translateY(${team.score * team.floorHeightVh}vh)`;
-
-                const climber = document.getElementById(`climber-${side}`);
-                climber.style.transform = `scale(1.2)`;
-                setTimeout(() => climber.style.transform = `scale(1)`, 200);
 
                 renderNextFloor(side, team.score + 5);
 
@@ -514,6 +610,17 @@
                 sfx.playWrong();
                 btnEl.classList.add('wrong');
                 setTimeout(() => btnEl.classList.remove('wrong'), 400);
+
+                // Animación Emoji Triste
+                climber.innerText = team.sadEmoji;
+                climber.classList.remove('happy-anim', 'sad-anim');
+                void climber.offsetWidth; // Trigger reflow
+                climber.classList.add('sad-anim');
+
+                setTimeout(() => {
+                    climber.innerText = team.defaultEmoji;
+                    climber.classList.remove('sad-anim');
+                }, 600);
             }
         }
 
@@ -523,18 +630,28 @@
             sfx.init();
 
             bgMusic.volume = 0.3;
-            bgMusic.play().catch(err => console.log("Reproducción bloqueada por el navegador:", err));
+            bgMusic.play().catch(err => console.log("Reproducción bloqueada:", err));
 
             initTeam('left');
             initTeam('right');
 
             isGameActive = true;
-            timeLeft = 60;
+            timeLeft = 120; // 2 minutos
+            
+            const timerDisplay = document.getElementById('timer-display');
+            timerDisplay.innerText = formatTime(timeLeft);
+            timerDisplay.classList.remove('warning');
             document.getElementById('start-btn').style.display = 'none';
 
             gameTimer = setInterval(() => {
                 timeLeft--;
-                document.getElementById('timer-display').innerText = `⏱️ ${timeLeft}s`;
+                timerDisplay.innerText = formatTime(timeLeft);
+
+                // Alerta para últimos 10 segundos
+                if (timeLeft <= 10 && timeLeft > 0) {
+                    timerDisplay.classList.add('warning');
+                    sfx.playWarning();
+                }
 
                 if (timeLeft <= 0) {
                     endGame();
@@ -542,13 +659,16 @@
             }, 1000);
         }
 
-        // FIN DE CARRERA
+        // FIN DE CARRERA CON TROMPETAS
         function endGame() {
             clearInterval(gameTimer);
             isGameActive = false;
 
             bgMusic.pause();
             bgMusic.currentTime = 0;
+
+            // Sonido de trompetas
+            sfx.playTrumpetFanfare();
 
             const scoreL = teamData.left.score;
             const scoreR = teamData.right.score;
