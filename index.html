@@ -3,85 +3,307 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EFL Word Climbers - Split Screen Smartboard Game</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Ice Climbers Arcade - EFL Vocabulary</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            touch-action: manipulation; /* Respuesta táctil rápida sin delay */
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+        }
+
+        /* Pantalla Dividida en dos columnas */
+        #game-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .team-side {
+            flex: 1;
+            height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column-reverse; /* Nivel 1 abajo, Nivel Final arriba */
+            border-right: 3px solid #0f172a;
+        }
+
+        #left-side { background: linear-gradient(180deg, #0c4a6e 0%, #0284c7 100%); }
+        #right-side { background: linear-gradient(180deg, #4c0519 0%, #e11d48 100%); }
+
+        /* Encabezado fijo */
+        .team-header {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: white;
+            z-index: 30;
+            background: rgba(15, 23, 42, 0.7);
+            padding: 6px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        /* Estructura de Pisos */
+        .level-tier {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            border-top: 2px dashed rgba(255, 255, 255, 0.2);
+            opacity: 0.4; /* Niveles bloqueados */
+            transition: opacity 0.3s ease;
+        }
+
+        .level-tier.active {
+            opacity: 1; /* Nivel actual interactivo */
+        }
+
+        /* Pregunta pintada en la pared del fondo */
+        .question-wall {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #ffffff;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.7);
+            padding: 10px;
+            text-align: center;
+        }
+
+        /* Fila de bloques que forman el piso superior */
+        .ice-floor {
+            display: flex;
+            width: 100%;
+            height: 55px;
+            gap: 4px;
+            padding: 0 4px;
+        }
+
+        .block {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #38bdf8;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: transform 0.1s ease, background 0.2s ease;
+            pointer-events: none; /* Bloqueado hasta que sea el nivel activo */
+        }
+
+        .level-tier.active .block {
+            pointer-events: auto;
+        }
+
+        .block:active {
+            transform: scale(0.95);
+        }
+
+        .block.correct-path {
+            background: #22c55e !important;
+            color: white;
+            border-color: #86efac;
+        }
+
+        .block.wrong-path {
+            background: #ef4444 !important;
+            color: white;
+        }
+
+        /* Muñeco Esquimal */
+        .climber {
+            position: absolute;
+            font-size: 3rem;
+            bottom: 10px;
+            left: 20px;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 20;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+            pointer-events: none;
+        }
+
+        /* Banner de Victoria */
+        .victory-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.92);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            color: #fbbf24;
+            font-size: 2.2rem;
+            font-weight: 900;
+            text-align: center;
+            padding: 20px;
+        }
+        .victory-overlay.active { display: flex; }
+        
+        .restart-btn {
+            margin-top: 20px;
+            padding: 15px 30px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            background: #22c55e;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
 
     <div id="game-container">
-        <!-- ================= LADO IZQUIERDO: EQUIPO AZUL ================= -->
+        <!-- LADO IZQUIERDO: EQUIPO AZUL -->
         <div class="team-side" id="left-side">
-            <div class="team-header">
-                <span class="team-badge blue">❄️ EQUIPO AZUL</span>
-                <div class="score-tracker">Piso: <span id="floor-num-left">0</span>/3</div>
-            </div>
-            
-            <div class="climber" id="climber-left" aria-label="Escalador Azul">🥶</div>
-
-            <!-- Pisos de la montaña -->
-            <div class="floor" data-floor="3">
-                <button class="block" onclick="openQuiz('left', 3)">Nivel 3 🏆</button>
-            </div>
-            <div class="floor" data-floor="2">
-                <button class="block" onclick="openQuiz('left', 2)">Nivel 2 🧗</button>
-            </div>
-            <div class="floor" data-floor="1">
-                <button class="block" onclick="openQuiz('left', 1)">Nivel 1 🚀</button>
-            </div>
-            <div class="floor ground" data-floor="0">
-                <span class="ground-label">Base Camp</span>
-            </div>
-
-            <!-- Modal Independiente Equipo Izquierdo -->
-            <div class="quiz-modal" id="modal-left">
-                <div class="modal-card">
-                    <div class="level-indicator" id="level-tag-left">Nivel 1</div>
-                    <div class="question-text" id="q-text-left">Cargando pregunta...</div>
-                    <div class="options-container" id="options-left"></div>
-                </div>
+            <div class="team-header">❄️ EQUIPO AZUL</div>
+            <div class="climber" id="climber-left">🥶</div>
+            <div class="victory-overlay" id="victory-left">
+                🏆 ¡VICTORIA AZUL!
+                <button class="restart-btn" onclick="location.reload()">Jugar de Nuevo</button>
             </div>
         </div>
 
-        <!-- Divider Central -->
-        <div class="center-divider">
-            <div class="vs-badge">VS</div>
-        </div>
-
-        <!-- ================= LADO DERECHO: EQUIPO ROJO ================= -->
+        <!-- LADO DERECHO: EQUIPO ROJO -->
         <div class="team-side" id="right-side">
-            <div class="team-header">
-                <span class="team-badge red">🔥 EQUIPO ROJO</span>
-                <div class="score-tracker">Piso: <span id="floor-num-right">0</span>/3</div>
-            </div>
-
-            <div class="climber" id="climber-right" aria-label="Escalador Rojo">🥵</div>
-
-            <!-- Pisos de la montaña -->
-            <div class="floor" data-floor="3">
-                <button class="block" onclick="openQuiz('right', 3)">Nivel 3 🏆</button>
-            </div>
-            <div class="floor" data-floor="2">
-                <button class="block" onclick="openQuiz('right', 2)">Nivel 2 🧗</button>
-            </div>
-            <div class="floor" data-floor="1">
-                <button class="block" onclick="openQuiz('right', 1)">Nivel 1 🚀</button>
-            </div>
-            <div class="floor ground" data-floor="0">
-                <span class="ground-label">Base Camp</span>
-            </div>
-
-            <!-- Modal Independiente Equipo Derecho -->
-            <div class="quiz-modal" id="modal-right">
-                <div class="modal-card">
-                    <div class="level-indicator" id="level-tag-right">Nivel 1</div>
-                    <div class="question-text" id="q-text-right">Cargando pregunta...</div>
-                    <div class="options-container" id="options-right"></div>
-                </div>
+            <div class="team-header">🔥 EQUIPO ROJO</div>
+            <div class="climber" id="climber-right">🥵</div>
+            <div class="victory-overlay" id="victory-right">
+                🏆 ¡VICTORIA ROJA!
+                <button class="restart-btn" onclick="location.reload()">Jugar de Nuevo</button>
             </div>
         </div>
     </div>
 
-    <!-- Sonidos sintetizados mediante Web Audio API -->
-    <script src="script.js"></script>
+    <script>
+        // Banco de preguntas nivel por nivel (Nivel 1 abajo -> Nivel 4 arriba)
+        const levelsData = [
+            {
+                level: 1,
+                question: "opposite of hot",
+                options: ["warm", "summer", "soda", "cold"],
+                correct: "cold"
+            },
+            {
+                level: 2,
+                question: "a animal that can fly",
+                options: ["lion", "eagle", "shark", "bear"],
+                correct: "eagle"
+            },
+            {
+                level: 3,
+                question: "past tense of 'GO'",
+                options: ["went", "gone", "goes", "going"],
+                correct: "went"
+            },
+            {
+                level: 4,
+                question: "synonym of 'BEAUTIFUL'",
+                options: ["ugly", "angry", "gorgeous", "sad"],
+                correct: "gorgeous"
+            }
+        ];
+
+        const gameState = {
+            left: { currentLevel: 1 },
+            right: { currentLevel: 1 }
+        };
+
+        // Inicializar torre de niveles para ambos equipos
+        function buildMountain(side) {
+            const container = document.getElementById(`${side}-side`);
+
+            levelsData.forEach((lvlData) => {
+                const tier = document.createElement('div');
+                tier.className = `level-tier level-${lvlData.level} ${lvlData.level === 1 ? 'active' : ''}`;
+                tier.dataset.level = lvlData.level;
+
+                // Fila de bloques (Techo)
+                const floor = document.createElement('div');
+                floor.className = 'ice-floor';
+
+                lvlData.options.forEach(optionText => {
+                    const block = document.createElement('div');
+                    block.className = 'block';
+                    block.innerText = optionText;
+                    block.onclick = () => handleBlockClick(side, lvlData.level, optionText, lvlData.correct, block);
+                    floor.appendChild(block);
+                });
+
+                // Pared con pregunta (Fondo)
+                const wall = document.createElement('div');
+                wall.className = 'question-wall';
+                wall.innerText = `Level ${lvlData.level}: ${lvlData.question}`;
+
+                tier.appendChild(floor);
+                tier.appendChild(wall);
+                container.appendChild(tier);
+            });
+        }
+
+        function handleBlockClick(side, level, selected, correct, blockEl) {
+            const state = gameState[side];
+            if (level !== state.currentLevel) return;
+
+            if (selected === correct) {
+                // Respuesta Correcta: Marcar bloque y subir esquimal
+                blockEl.classList.add('correct-path');
+                
+                // Mover esquimal al piso superior
+                const climber = document.getElementById(`climber-${side}`);
+                const totalLevels = levelsData.length;
+                const levelHeightPercent = 100 / totalLevels;
+                
+                // Posicionar verticalmente sobre el piso acertado
+                climber.style.bottom = `calc(${state.currentLevel * levelHeightPercent}% + 10px)`;
+                
+                // Desactivar nivel actual y activar el siguiente
+                const currentTier = document.querySelector(`#${side}-side .level-tier[data-level="${state.currentLevel}"]`);
+                currentTier.classList.remove('active');
+
+                state.currentLevel++;
+
+                if (state.currentLevel <= totalLevels) {
+                    const nextTier = document.querySelector(`#${side}-side .level-tier[data-level="${state.currentLevel}"]`);
+                    nextTier.classList.add('active');
+                } else {
+                    // ¡Llegó a la cima!
+                    document.getElementById(`victory-${side}`).classList.add('active');
+                }
+            } else {
+                // Respuesta Incorrecta: Efecto rojo temporal
+                blockEl.classList.add('wrong-path');
+                setTimeout(() => blockEl.classList.remove('wrong-path'), 400);
+            }
+        }
+
+        // Cargar juego para ambos lados
+        buildMountain('left');
+        buildMountain('right');
+    </script>
 </body>
 </html>
