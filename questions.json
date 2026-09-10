@@ -1,0 +1,68 @@
+{
+  "1": [
+    {
+      "q": "What is the opposite of 'COLD'?",
+      "options": ["Hot", "Ice", "Dark", "Tall"],
+      "correct": "Hot"
+    },
+    {
+      "q": "Which animal can fly?",
+      "options": ["Eagle", "Lion", "Shark", "Snake"],
+      "correct": "Eagle"
+    },
+    {
+      "q": "Choose the correct color: The sky is...",
+      "options": ["Blue", "Green", "Red", "Yellow"],
+      "correct": "Blue"
+    },
+    {
+      "q": "What do you use to write?",
+      "options": ["Pencil", "Pillow", "Plate", "Phone"],
+      "correct": "Pencil"
+    }
+  ],
+  "2": [
+    {
+      "q": "A person who cooks in a restaurant is a...",
+      "options": ["Chef", "Doctor", "Driver", "Teacher"],
+      "correct": "Chef"
+    },
+    {
+      "q": "Where do you buy aspirin and medicine?",
+      "options": ["Pharmacy", "Bakery", "Library", "Gym"],
+      "correct": "Pharmacy"
+    },
+    {
+      "q": "Past tense of 'GO':",
+      "options": ["Went", "Gone", "Goes", "Going"],
+      "correct": "Went"
+    },
+    {
+      "q": "Which one is a fruit?",
+      "options": ["Apple", "Carrot", "Onion", "Potato"],
+      "correct": "Apple"
+    }
+  ],
+  "3": [
+    {
+      "q": "Complete: She needs to ___ her shoes before entering.",
+      "options": ["take off", "put on", "look for", "run away"],
+      "correct": "take off"
+    },
+    {
+      "q": "What is a synonym of 'BEAUTIFUL'?",
+      "options": ["Gorgeous", "Ugly", "Angry", "Boring"],
+      "correct": "Gorgeous"
+    },
+    {
+      "q": "Choose the correct modal: You ___ study to pass the exam.",
+      "options": ["must", "can't", "would", "never"],
+      "correct": "must"
+    },
+    {
+      "q": "Which word means 'very hungry'?",
+      "options": ["Starving", "Thirsty", "Exhausted", "Delighted"],
+      "correct": "Starving"
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EFL Word Climbers - Split Screen Smartboard Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- ================= LADO IZQUIERDO: EQUIPO AZUL ================= -->
+        <div class="team-side" id="left-side">
+            <div class="team-header">
+                <span class="team-badge blue">❄️ EQUIPO AZUL</span>
+                <div class="score-tracker">Piso: <span id="floor-num-left">0</span>/3</div>
+            </div>
+            
+            <div class="climber" id="climber-left" aria-label="Escalador Azul">🥶</div>
+
+            <!-- Pisos de la montaña -->
+            <div class="floor" data-floor="3">
+                <button class="block" onclick="openQuiz('left', 3)">Nivel 3 🏆</button>
+            </div>
+            <div class="floor" data-floor="2">
+                <button class="block" onclick="openQuiz('left', 2)">Nivel 2 🧗</button>
+            </div>
+            <div class="floor" data-floor="1">
+                <button class="block" onclick="openQuiz('left', 1)">Nivel 1 🚀</button>
+            </div>
+            <div class="floor ground" data-floor="0">
+                <span class="ground-label">Base Camp</span>
+            </div>
+
+            <!-- Modal Independiente Equipo Izquierdo -->
+            <div class="quiz-modal" id="modal-left">
+                <div class="modal-card">
+                    <div class="level-indicator" id="level-tag-left">Nivel 1</div>
+                    <div class="question-text" id="q-text-left">Cargando pregunta...</div>
+                    <div class="options-container" id="options-left"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Divider Central -->
+        <div class="center-divider">
+            <div class="vs-badge">VS</div>
+        </div>
+
+        <!-- ================= LADO DERECHO: EQUIPO ROJO ================= -->
+        <div class="team-side" id="right-side">
+            <div class="team-header">
+                <span class="team-badge red">🔥 EQUIPO ROJO</span>
+                <div class="score-tracker">Piso: <span id="floor-num-right">0</span>/3</div>
+            </div>
+
+            <div class="climber" id="climber-right" aria-label="Escalador Rojo">🥵</div>
+
+            <!-- Pisos de la montaña -->
+            <div class="floor" data-floor="3">
+                <button class="block" onclick="openQuiz('right', 3)">Nivel 3 🏆</button>
+            </div>
+            <div class="floor" data-floor="2">
+                <button class="block" onclick="openQuiz('right', 2)">Nivel 2 🧗</button>
+            </div>
+            <div class="floor" data-floor="1">
+                <button class="block" onclick="openQuiz('right', 1)">Nivel 1 🚀</button>
+            </div>
+            <div class="floor ground" data-floor="0">
+                <span class="ground-label">Base Camp</span>
+            </div>
+
+            <!-- Modal Independiente Equipo Derecho -->
+            <div class="quiz-modal" id="modal-right">
+                <div class="modal-card">
+                    <div class="level-indicator" id="level-tag-right">Nivel 1</div>
+                    <div class="question-text" id="q-text-right">Cargando pregunta...</div>
+                    <div class="options-container" id="options-right"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sonidos sintetizados mediante Web Audio API -->
+    <script src="script.js"></script>
+</body>
+</html>
