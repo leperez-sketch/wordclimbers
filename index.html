@@ -62,6 +62,16 @@
         }
         .start-btn:active { transform: scale(0.95); }
 
+        .mute-btn {
+            background: #334155;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #fff;
+        }
+
         /* PANTALLA DIVIDIDA */
         #game-container {
             display: flex;
@@ -130,7 +140,7 @@
             bottom: 0;
             left: 0;
             display: flex;
-            flex-direction: column-reverse; /* Apilamiento ascendente */
+            flex-direction: column-reverse;
             transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
@@ -143,7 +153,7 @@
             justify-content: space-between;
             border-top: 2px dashed rgba(255, 255, 255, 0.2);
             position: relative;
-            box-sizing: border-border;
+            box-sizing: border-box;
         }
 
         .question-banner {
@@ -197,7 +207,7 @@
             pointer-events: none;
         }
 
-        /* PANALES DE GAME OVER Y MENÚS */
+        /* PANELES DE GAME OVER Y MENÚS */
         .overlay {
             position: absolute;
             inset: 0;
@@ -217,9 +227,13 @@
 </head>
 <body>
 
+    <!-- AUDIO DE FONDO -->
+    <audio id="bg-music" src="niknet.mp3" loop></audio>
+
     <!-- BARRA DE CONTROL -->
     <div id="top-bar">
         <div style="font-size: 1.2rem; font-weight: 800;">🏔️ TOWER CLIMBER</div>
+        <button id="mute-btn" class="mute-btn" onclick="toggleMute()">🔊</button>
         <div class="timer-box" id="timer-display">⏱️ 60s</div>
         <button class="start-btn" id="start-btn" onclick="startGame()">▶️ INICIAR CARRERA</button>
     </div>
@@ -402,6 +416,7 @@
             }
         }
         const sfx = new SoundFX();
+        const bgMusic = document.getElementById('bg-music');
 
         // ESTADO GLOBAL
         let timeLeft = 60;
@@ -418,6 +433,12 @@
             return [...arr].sort(() => Math.random() - 0.5);
         }
 
+        // CONTROL MUTE
+        function toggleMute() {
+            bgMusic.muted = !bgMusic.muted;
+            document.getElementById('mute-btn').innerText = bgMusic.muted ? '🔇' : '🔊';
+        }
+
         // INICIALIZAR EQUIPO
         function initTeam(side) {
             const team = teamData[side];
@@ -429,7 +450,6 @@
             track.innerHTML = "";
             track.style.transform = `translateY(0vh)`;
 
-            // Renderizar los primeros 5 pisos
             for (let i = 1; i <= 5; i++) {
                 renderNextFloor(side, i);
             }
@@ -438,19 +458,16 @@
             climber.style.bottom = "2vh";
         }
 
-        // RENDERIZAR PISO DINÁMICO EN EL CARRIL
+        // RENDERIZAR PISO DINÁMICO
         function renderNextFloor(side, floorNum) {
             const team = teamData[side];
             const track = document.getElementById(`track-${side}`);
-            
-            // Obtener pregunta del mazo
             const qData = team.deck[(floorNum - 1) % team.deck.length];
 
             const floorEl = document.createElement('div');
             floorEl.className = `floor-unit floor-${floorNum}`;
             floorEl.dataset.floor = floorNum;
 
-            // Fila de botones/bloques (piso superior)
             const blocksRow = document.createElement('div');
             blocksRow.className = 'blocks-row';
 
@@ -463,7 +480,6 @@
                 blocksRow.appendChild(btn);
             });
 
-            // Pregunta pintada en la pared
             const questionBanner = document.createElement('div');
             questionBanner.className = 'question-banner';
             questionBanner.innerText = `${qData.q}`;
@@ -473,12 +489,11 @@
             track.appendChild(floorEl);
         }
 
-        // MANEJO DE TAP/TÁCTIL EN BLOQUES
+        // MANEJO DE TAP
         function handleTap(side, floorNum, selectedOpt, correctOpt, btnEl) {
             if (!isGameActive) return;
             const team = teamData[side];
 
-            // Solo responder en el piso activo correspondiente
             if (floorNum !== team.score + 1) return;
 
             if (selectedOpt === correctOpt) {
@@ -486,16 +501,13 @@
                 team.score++;
                 document.getElementById(`score-${side}`).innerText = team.score;
 
-                // Desplazar pista hacia abajo para efecto infinito
                 const track = document.getElementById(`track-${side}`);
                 track.style.transform = `translateY(${team.score * team.floorHeightVh}vh)`;
 
-                // Animación leve del escalador
                 const climber = document.getElementById(`climber-${side}`);
                 climber.style.transform = `scale(1.2)`;
                 setTimeout(() => climber.style.transform = `scale(1)`, 200);
 
-                // Agregar el siguiente piso en la parte superior
                 renderNextFloor(side, team.score + 5);
 
             } else {
@@ -509,6 +521,9 @@
         function startGame() {
             if (isGameActive) return;
             sfx.init();
+
+            bgMusic.volume = 0.3;
+            bgMusic.play().catch(err => console.log("Reproducción bloqueada por el navegador:", err));
 
             initTeam('left');
             initTeam('right');
@@ -527,10 +542,13 @@
             }, 1000);
         }
 
-        // FIN DE LA CARRERA Y DECLARACIÓN DE GANADOR
+        // FIN DE CARRERA
         function endGame() {
             clearInterval(gameTimer);
             isGameActive = false;
+
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
 
             const scoreL = teamData.left.score;
             const scoreR = teamData.right.score;
@@ -553,7 +571,7 @@
             overlay.style.display = 'flex';
         }
 
-        // Precargar tableros iniciales
+        // Precargar tableros
         initTeam('left');
         initTeam('right');
     </script>
