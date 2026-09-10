@@ -3,104 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ice Climbers Arcade - EFL Vocabulary</title>
+    <title>EFL Infinite Ice Climbers - Arcade Split Screen</title>
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             user-select: none;
-            touch-action: manipulation; /* Respuesta táctil rápida sin delay */
+            touch-action: manipulation;
         }
 
         body, html {
             width: 100%;
             height: 100%;
             overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0f172a;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #090d16;
+            color: #fff;
         }
 
-        /* Pantalla Dividida en dos columnas */
+        /* BARRA SUPERIOR DE CONTROL Y TIMER */
+        #top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: #0f172a;
+            border-bottom: 3px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 100;
+        }
+
+        .timer-box {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #f59e0b;
+            background: #1e293b;
+            padding: 4px 20px;
+            border-radius: 30px;
+            border: 2px solid #f59e0b;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+        }
+
+        .start-btn {
+            background: #22c55e;
+            color: #fff;
+            border: none;
+            padding: 8px 24px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(34, 197, 94, 0.4);
+        }
+        .start-btn:active { transform: scale(0.95); }
+
+        /* PANTALLA DIVIDIDA */
         #game-container {
             display: flex;
             width: 100vw;
-            height: 100vh;
+            height: calc(100vh - 60px);
+            margin-top: 60px;
+            position: relative;
         }
 
         .team-side {
             flex: 1;
             height: 100%;
             position: relative;
-            display: flex;
-            flex-direction: column-reverse; /* Nivel 1 abajo, Nivel Final arriba */
-            border-right: 3px solid #0f172a;
+            overflow: hidden;
+            border-right: 2px solid #0f172a;
         }
 
-        #left-side { background: linear-gradient(180deg, #0c4a6e 0%, #0284c7 100%); }
-        #right-side { background: linear-gradient(180deg, #4c0519 0%, #e11d48 100%); }
+        #left-side { background: linear-gradient(180deg, #0f172a 0%, #1e3a8a 100%); }
+        #right-side { background: linear-gradient(180deg, #0f172a 0%, #881337 100%); }
 
-        /* Encabezado fijo */
-        .team-header {
+        /* ENCABEZADOS Y PUNTUACIÓN */
+        .team-hud {
             position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 1.5rem;
-            font-weight: 900;
-            color: white;
+            top: 15px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
             z-index: 30;
-            background: rgba(15, 23, 42, 0.7);
-            padding: 6px 20px;
+            pointer-events: none;
+        }
+
+        .team-name {
+            font-size: 1.4rem;
+            font-weight: 900;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 6px 16px;
             border-radius: 20px;
             backdrop-filter: blur(4px);
         }
+        .team-name.blue { color: #60a5fa; border: 2px solid #3b82f6; }
+        .team-name.red { color: #f87171; border: 2px solid #ef4444; }
 
-        /* Estructura de Pisos */
-        .level-tier {
-            flex: 1;
+        .floor-counter {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #38bdf8;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 6px 16px;
+            border-radius: 20px;
+        }
+
+        /* CARRIL INFINITO DE LA MONTAÑA */
+        .mountain-viewport {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mountain-track {
+            width: 100%;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column-reverse; /* Apilamiento ascendente */
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* PISO Y BLOQUES */
+        .floor-unit {
+            height: 18vh;
             width: 100%;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            position: relative;
             border-top: 2px dashed rgba(255, 255, 255, 0.2);
-            opacity: 0.4; /* Niveles bloqueados */
-            transition: opacity 0.3s ease;
+            position: relative;
+            box-sizing: border-border;
         }
 
-        .level-tier.active {
-            opacity: 1; /* Nivel actual interactivo */
-        }
-
-        /* Pregunta pintada en la pared del fondo */
-        .question-wall {
+        .question-banner {
             flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.6rem;
+            font-size: 1.5rem;
             font-weight: 800;
             color: #ffffff;
-            text-shadow: 2px 2px 6px rgba(0,0,0,0.7);
-            padding: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            padding: 0 10px;
             text-align: center;
         }
 
-        /* Fila de bloques que forman el piso superior */
-        .ice-floor {
+        .blocks-row {
             display: flex;
-            width: 100%;
-            height: 55px;
-            gap: 4px;
-            padding: 0 4px;
+            height: 50px;
+            gap: 6px;
+            padding: 0 6px;
         }
 
-        .block {
+        .block-btn {
             flex: 1;
-            background: rgba(255, 255, 255, 0.9);
-            border: 2px solid #38bdf8;
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #00d2ff;
+            border-radius: 10px;
             font-size: 1.1rem;
             font-weight: 800;
             color: #0f172a;
@@ -108,202 +178,384 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            transition: transform 0.1s ease, background 0.2s ease;
-            pointer-events: none; /* Bloqueado hasta que sea el nivel activo */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: transform 0.1s ease, background 0.15s ease;
         }
 
-        .level-tier.active .block {
-            pointer-events: auto;
-        }
+        .block-btn:active { transform: scale(0.94); }
+        .block-btn.wrong { background: #ef4444 !important; color: white; }
 
-        .block:active {
-            transform: scale(0.95);
-        }
-
-        .block.correct-path {
-            background: #22c55e !important;
-            color: white;
-            border-color: #86efac;
-        }
-
-        .block.wrong-path {
-            background: #ef4444 !important;
-            color: white;
-        }
-
-        /* Muñeco Esquimal */
+        /* PERSONAJE ESCALADOR */
         .climber {
             position: absolute;
-            font-size: 3rem;
-            bottom: 10px;
+            font-size: 3.5rem;
+            bottom: 2vh;
             left: 20px;
-            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
             z-index: 20;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+            transition: transform 0.4s ease, bottom 0.4s ease;
+            filter: drop-shadow(0 6px 6px rgba(0,0,0,0.6));
             pointer-events: none;
         }
 
-        /* Banner de Victoria */
-        .victory-overlay {
+        /* PANALES DE GAME OVER Y MENÚS */
+        .overlay {
             position: absolute;
             inset: 0;
-            background: rgba(15, 23, 42, 0.92);
-            display: none;
+            background: rgba(15, 23, 42, 0.95);
+            display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 50;
-            color: #fbbf24;
-            font-size: 2.2rem;
-            font-weight: 900;
-            text-align: center;
+            z-index: 200;
             padding: 20px;
+            text-align: center;
         }
-        .victory-overlay.active { display: flex; }
-        
-        .restart-btn {
-            margin-top: 20px;
-            padding: 15px 30px;
-            font-size: 1.3rem;
-            font-weight: 800;
-            background: #22c55e;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-        }
+
+        .overlay h1 { font-size: 3rem; color: #fbbf24; margin-bottom: 10px; }
+        .overlay p { font-size: 1.5rem; margin-bottom: 25px; color: #cbd5e1; }
     </style>
 </head>
 <body>
 
+    <!-- BARRA DE CONTROL -->
+    <div id="top-bar">
+        <div style="font-size: 1.2rem; font-weight: 800;">🏔️ TOWER CLIMBER</div>
+        <div class="timer-box" id="timer-display">⏱️ 60s</div>
+        <button class="start-btn" id="start-btn" onclick="startGame()">▶️ INICIAR CARRERA</button>
+    </div>
+
+    <!-- PANTALLA DIVIDIDA -->
     <div id="game-container">
-        <!-- LADO IZQUIERDO: EQUIPO AZUL -->
+        
+        <!-- EQUIPO AZUL -->
         <div class="team-side" id="left-side">
-            <div class="team-header">❄️ EQUIPO AZUL</div>
+            <div class="team-hud">
+                <span class="team-name blue">❄️ AZUL</span>
+                <span class="floor-counter">Piso: <span id="score-left">0</span></span>
+            </div>
             <div class="climber" id="climber-left">🥶</div>
-            <div class="victory-overlay" id="victory-left">
-                🏆 ¡VICTORIA AZUL!
-                <button class="restart-btn" onclick="location.reload()">Jugar de Nuevo</button>
+            <div class="mountain-viewport">
+                <div class="mountain-track" id="track-left"></div>
             </div>
         </div>
 
-        <!-- LADO DERECHO: EQUIPO ROJO -->
+        <!-- EQUIPO ROJO -->
         <div class="team-side" id="right-side">
-            <div class="team-header">🔥 EQUIPO ROJO</div>
+            <div class="team-hud">
+                <span class="team-name red">🔥 ROJO</span>
+                <span class="floor-counter">Piso: <span id="score-right">0</span></span>
+            </div>
             <div class="climber" id="climber-right">🥵</div>
-            <div class="victory-overlay" id="victory-right">
-                🏆 ¡VICTORIA ROJA!
-                <button class="restart-btn" onclick="location.reload()">Jugar de Nuevo</button>
+            <div class="mountain-viewport">
+                <div class="mountain-track" id="track-right"></div>
             </div>
         </div>
+
+    </div>
+
+    <!-- OVERLAY DE FIN DE JUEGO -->
+    <div class="overlay" id="gameover-overlay" style="display: none;">
+        <h1 id="winner-title">🏆 ¡FIN DEL TIEMPO!</h1>
+        <p id="winner-details">El Equipo Azul subió 15 pisos vs 12 pisos del Equipo Rojo.</p>
+        <button class="start-btn" onclick="location.reload()" style="font-size: 1.5rem; padding: 15px 35px;">🔄 JUGAR OTRA VEZ</button>
     </div>
 
     <script>
-        // Banco de preguntas nivel por nivel (Nivel 1 abajo -> Nivel 4 arriba)
-        const levelsData = [
-            {
-                level: 1,
-                question: "opposite of hot",
-                options: ["warm", "summer", "soda", "cold"],
-                correct: "cold"
-            },
-            {
-                level: 2,
-                question: "a animal that can fly",
-                options: ["lion", "eagle", "shark", "bear"],
-                correct: "eagle"
-            },
-            {
-                level: 3,
-                question: "past tense of 'GO'",
-                options: ["went", "gone", "goes", "going"],
-                correct: "went"
-            },
-            {
-                level: 4,
-                question: "synonym of 'BEAUTIFUL'",
-                options: ["ugly", "angry", "gorgeous", "sad"],
-                correct: "gorgeous"
-            }
+        // BANCO DE 100 PREGUNTAS DE VOCABULARIO EFL
+        const rawVocabulary = [
+            // Opuestos (30)
+            { q: "Opposite of 'HOT'", options: ["Cold", "Warm", "Sun", "Fire"], correct: "Cold" },
+            { q: "Opposite of 'BIG'", options: ["Small", "Huge", "Giant", "Tall"], correct: "Small" },
+            { q: "Opposite of 'FAST'", options: ["Slow", "Quick", "Smart", "Hard"], correct: "Slow" },
+            { q: "Opposite of 'HAPPY'", options: ["Sad", "Glad", "Funny", "Sweet"], correct: "Sad" },
+            { q: "Opposite of 'DAY'", options: ["Night", "Sun", "Noon", "Morning"], correct: "Night" },
+            { q: "Opposite of 'DARK'", options: ["Light", "Black", "Brown", "Deep"], correct: "Light" },
+            { q: "Opposite of 'EASY'", options: ["Hard", "Simple", "Soft", "Clean"], correct: "Hard" },
+            { q: "Opposite of 'UP'", options: ["Down", "High", "Top", "Sky"], correct: "Down" },
+            { q: "Opposite of 'OLD'", options: ["Young", "Ancient", "Long", "Gray"], correct: "Young" },
+            { q: "Opposite of 'TALL'", options: ["Short", "High", "Big", "Long"], correct: "Short" },
+            { q: "Opposite of 'CLEAN'", options: ["Dirty", "Neat", "Fresh", "Pure"], correct: "Dirty" },
+            { q: "Opposite of 'RICH'", options: ["Poor", "Wealthy", "Gold", "Cheap"], correct: "Poor" },
+            { q: "Opposite of 'HEAVY'", options: ["Light", "Strong", "Fat", "Thick"], correct: "Light" },
+            { q: "Opposite of 'STRONG'", options: ["Weak", "Brave", "Hard", "Tough"], correct: "Weak" },
+            { q: "Opposite of 'OPEN'", options: ["Closed", "Free", "Uncovered", "Wide"], correct: "Closed" },
+            { q: "Opposite of 'FULL'", options: ["Empty", "Filled", "Heavy", "Round"], correct: "Empty" },
+            { q: "Opposite of 'DRY'", options: ["Wet", "Cold", "Hot", "Dusty"], correct: "Wet" },
+            { q: "Opposite of 'LOVE'", options: ["Hate", "Like", "Adore", "Smile"], correct: "Hate" },
+            { q: "Opposite of 'FIRST'", options: ["Last", "Second", "Early", "Begin"], correct: "Last" },
+            { q: "Opposite of 'BUY'", options: ["Sell", "Pay", "Give", "Take"], correct: "Sell" },
+            { q: "Opposite of 'FAR'", options: ["Near", "Distant", "Long", "Away"], correct: "Near" },
+            { q: "Opposite of 'QUIET'", options: ["Noisy", "Silent", "Calm", "Soft"], correct: "Noisy" },
+            { q: "Opposite of 'SAFE'", options: ["Dangerous", "Secure", "Good", "Right"], correct: "Dangerous" },
+            { q: "Opposite of 'CHEAP'", options: ["Expensive", "Low", "Free", "Poor"], correct: "Expensive" },
+            { q: "Opposite of 'WIN'", options: ["Lose", "Play", "Score", "Beat"], correct: "Lose" },
+            { q: "Opposite of 'ALWAYS'", options: ["Never", "Often", "Usually", "Sometimes"], correct: "Never" },
+            { q: "Opposite of 'BEGIN'", options: ["Finish", "Start", "Open", "Create"], correct: "Finish" },
+            { q: "Opposite of 'SMART'", options: ["Stupid", "Clever", "Bright", "Wise"], correct: "Stupid" },
+            { q: "Opposite of 'EARLY'", options: ["Late", "Soon", "Fast", "Now"], correct: "Late" },
+            { q: "Opposite of 'DEEP'", options: ["Shallow", "Dark", "Low", "Bottom"], correct: "Shallow" },
+
+            // Categorías y Definiciones (35)
+            { q: "An animal that can fly:", options: ["Eagle", "Lion", "Shark", "Snake"], correct: "Eagle" },
+            { q: "A person who cooks in a restaurant:", options: ["Chef", "Doctor", "Driver", "Teacher"], correct: "Chef" },
+            { q: "Where do you buy medicine?", options: ["Pharmacy", "Bakery", "Library", "Gym"], correct: "Pharmacy" },
+            { q: "The day after Monday:", options: ["Tuesday", "Sunday", "Wednesday", "Friday"], correct: "Tuesday" },
+            { q: "Which one is a fruit?", options: ["Apple", "Carrot", "Onion", "Potato"], correct: "Apple" },
+            { q: "Which vehicle moves on water?", options: ["Ship", "Car", "Train", "Bicycle"], correct: "Ship" },
+            { q: "You use this to write on paper:", options: ["Pencil", "Pillow", "Spoon", "Mirror"], correct: "Pencil" },
+            { q: "The color of grass is:", options: ["Green", "Blue", "Red", "Yellow"], correct: "Green" },
+            { q: "A place with many books:", options: ["Library", "Bank", "Park", "Cinema"], correct: "Library" },
+            { q: "The month after December:", options: ["January", "November", "March", "August"], correct: "January" },
+            { q: "An animal that lives in the sea:", options: ["Dolphin", "Tiger", "Giraffe", "Eagle"], correct: "Dolphin" },
+            { q: "Who treats sick people?", options: ["Doctor", "Pilot", "Artist", "Baker"], correct: "Doctor" },
+            { q: "We wear this on our feet:", options: ["Shoes", "Hat", "Gloves", "Ring"], correct: "Shoes" },
+            { q: "What gives us light during the day?", options: ["Sun", "Moon", "Stars", "Lamp"], correct: "Sun" },
+            { q: "A season with snow and ice:", options: ["Winter", "Summer", "Spring", "Autumn"], correct: "Winter" },
+            { q: "You use this to cut paper:", options: ["Scissors", "Ruler", "Glue", "Eraser"], correct: "Scissors" },
+            { q: "Which animal produces milk?", options: ["Cow", "Frog", "Duck", "Spider"], correct: "Cow" },
+            { q: "Where do you watch movies?", options: ["Cinema", "Hospital", "Market", "Garage"], correct: "Cinema" },
+            { q: "A drink made from fruit:", options: ["Juice", "Bread", "Cheese", "Soup"], correct: "Juice" },
+            { q: "You wear this on your head:", options: ["Cap", "Socks", "Belt", "Pants"], correct: "Cap" },
+            { q: "Which one is a vegetable?", options: ["Carrot", "Banana", "Grape", "Orange"], correct: "Carrot" },
+            { q: "A huge animal with a trunk:", options: ["Elephant", "Monkey", "Zebra", "Hippo"], correct: "Elephant" },
+            { q: "Where do you board an airplane?", options: ["Airport", "Station", "Port", "Stop"], correct: "Airport" },
+            { q: "We use this to tell time:", options: ["Clock", "Map", "Compass", "Phone"], correct: "Clock" },
+            { q: "The king of the jungle is the:", options: ["Lion", "Bear", "Wolf", "Fox"], correct: "Lion" },
+            { q: "Which one is sweet?", options: ["Sugar", "Salt", "Lemon", "Pepper"], correct: "Sugar" },
+            { q: "How many days in a week?", options: ["Seven", "Five", "Ten", "Twelve"], correct: "Seven" },
+            { q: "You sleep on a:", options: ["Bed", "Desk", "Chair", "Table"], correct: "Bed" },
+            { q: "A bird's house is a:", options: ["Nest", "Cave", "Barn", "Kennel"], correct: "Nest" },
+            { q: "The color of snow is:", options: ["White", "Black", "Pink", "Brown"], correct: "White" },
+            { q: "A yellow fruit monkeys love:", options: ["Banana", "Cherry", "Melon", "Plum"], correct: "Banana" },
+            { q: "We use our ears to:", options: ["Hear", "See", "Smell", "Taste"], correct: "Hear" },
+            { q: "We use our eyes to:", options: ["See", "Listen", "Touch", "Walk"], correct: "See" },
+            { q: "A baby dog is called a:", options: ["Puppy", "Kitten", "Calf", "Cub"], correct: "Puppy" },
+            { q: "A baby cat is called a:", options: ["Kitten", "Puppy", "Foal", "Chick"], correct: "Kitten" },
+
+            // Sinónimos y Gramática (35)
+            { q: "Synonym of 'BEAUTIFUL'", options: ["Gorgeous", "Ugly", "Angry", "Boring"], correct: "Gorgeous" },
+            { q: "Synonym of 'FAST'", options: ["Quick", "Slow", "Heavy", "Late"], correct: "Quick" },
+            { q: "Synonym of 'HUGE'", options: ["Gigantic", "Tiny", "Short", "Small"], correct: "Gigantic" },
+            { q: "Synonym of 'START'", options: ["Begin", "End", "Stop", "Close"], correct: "Begin" },
+            { q: "Synonym of 'SMART'", options: ["Intelligent", "Dull", "Lazy", "Weak"], correct: "Intelligent" },
+            { q: "Past tense of 'GO':", options: ["Went", "Gone", "Goes", "Going"], correct: "Went" },
+            { q: "Past tense of 'EAT':", options: ["Ate", "Eaten", "Eats", "Eating"], correct: "Ate" },
+            { q: "Past tense of 'SEE':", options: ["Saw", "Seen", "Sees", "Seeing"], correct: "Saw" },
+            { q: "Past tense of 'RUN':", options: ["Ran", "Runned", "Runs", "Running"], correct: "Ran" },
+            { q: "Past tense of 'BUY':", options: ["Bought", "Buyed", "Buys", "Buying"], correct: "Bought" },
+            { q: "Plural of 'CHILD':", options: ["Children", "Childs", "Childrens", "Childes"], correct: "Children" },
+            { q: "Plural of 'FOOT':", options: ["Feet", "Foots", "Feets", "Footes"], correct: "Feet" },
+            { q: "Plural of 'TOOTH':", options: ["Teeth", "Tooths", "Teeths", "Toothes"], correct: "Teeth" },
+            { q: "Plural of 'MOUSE':", options: ["Mice", "Mouses", "Mices", "Mousies"], correct: "Mice" },
+            { q: "Plural of 'MAN':", options: ["Men", "Mans", "Mens", "Manes"], correct: "Men" },
+            { q: "Complete: She ___ a teacher.", options: ["is", "are", "am", "be"], correct: "is" },
+            { q: "Complete: They ___ playing football.", options: ["are", "is", "am", "was"], correct: "are" },
+            { q: "Complete: I ___ a new bicycle.", options: ["have", "has", "is", "having"], correct: "have" },
+            { q: "Complete: The sun ___ in the east.", options: ["rises", "rise", "rising", "rose"], correct: "rises" },
+            { q: "Complete: Yesterday, I ___ my friend.", options: ["visited", "visit", "visiting", "visits"], correct: "visited" },
+            { q: "Synonym of 'HELP'", options: ["Assist", "Hurt", "Stop", "Block"], correct: "Assist" },
+            { q: "Synonym of 'SILENT'", options: ["Quiet", "Loud", "Active", "Noisy"], correct: "Quiet" },
+            { q: "Synonym of 'SICK'", options: ["Ill", "Healthy", "Strong", "Well"], correct: "Ill" },
+            { q: "Synonym of 'GIFT'", options: ["Present", "Price", "Cost", "Box"], correct: "Present" },
+            { q: "Synonym of 'GLAD'", options: ["Happy", "Sad", "Mad", "Tired"], correct: "Happy" },
+            { q: "Synonym of 'TRIP'", options: ["Journey", "Walk", "Run", "Stay"], correct: "Journey" },
+            { q: "Synonym of 'SELECT'", options: ["Choose", "Reject", "Find", "Lose"], correct: "Choose" },
+            { q: "Synonym of 'TINY'", options: ["Small", "Large", "Broad", "High"], correct: "Small" },
+            { q: "Synonym of 'CORRECT'", options: ["Right", "Wrong", "False", "Bad"], correct: "Right" },
+            { q: "Synonym of 'SIMPLE'", options: ["Easy", "Hard", "Complex", "Tough"], correct: "Easy" },
+            { q: "Complete: You ___ study to pass.", options: ["must", "can't", "never", "would"], correct: "must" },
+            { q: "Which word is a verb?", options: ["Run", "Blue", "Happy", "Table"], correct: "Run" },
+            { q: "Which word is a noun?", options: ["Dog", "Quickly", "Sing", "Beautiful"], correct: "Dog" },
+            { q: "Which word is an adjective?", options: ["Red", "Walk", "Easily", "Cat"], correct: "Red" },
+            { q: "Word meaning 'very hungry':", options: ["Starving", "Thirsty", "Sleepy", "Tired"], correct: "Starving" }
         ];
 
-        const gameState = {
-            left: { currentLevel: 1 },
-            right: { currentLevel: 1 }
+        // SINTETIZADOR DE SONIDO (Web Audio API)
+        class SoundFX {
+            constructor() { this.ctx = null; }
+            init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+            playCorrect() {
+                this.init(); if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.12);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(now); osc.stop(now + 0.25);
+            }
+            playWrong() {
+                this.init(); if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(160, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(now); osc.stop(now + 0.25);
+            }
+        }
+        const sfx = new SoundFX();
+
+        // ESTADO GLOBAL
+        let timeLeft = 60;
+        let gameTimer = null;
+        let isGameActive = false;
+
+        const teamData = {
+            left: { score: 0, deck: [], floorHeightVh: 18 },
+            right: { score: 0, deck: [], floorHeightVh: 18 }
         };
 
-        // Inicializar torre de niveles para ambos equipos
-        function buildMountain(side) {
-            const container = document.getElementById(`${side}-side`);
-
-            levelsData.forEach((lvlData) => {
-                const tier = document.createElement('div');
-                tier.className = `level-tier level-${lvlData.level} ${lvlData.level === 1 ? 'active' : ''}`;
-                tier.dataset.level = lvlData.level;
-
-                // Fila de bloques (Techo)
-                const floor = document.createElement('div');
-                floor.className = 'ice-floor';
-
-                lvlData.options.forEach(optionText => {
-                    const block = document.createElement('div');
-                    block.className = 'block';
-                    block.innerText = optionText;
-                    block.onclick = () => handleBlockClick(side, lvlData.level, optionText, lvlData.correct, block);
-                    floor.appendChild(block);
-                });
-
-                // Pared con pregunta (Fondo)
-                const wall = document.createElement('div');
-                wall.className = 'question-wall';
-                wall.innerText = `Level ${lvlData.level}: ${lvlData.question}`;
-
-                tier.appendChild(floor);
-                tier.appendChild(wall);
-                container.appendChild(tier);
-            });
+        // MEZCLAR ARRAY
+        function shuffle(arr) {
+            return [...arr].sort(() => Math.random() - 0.5);
         }
 
-        function handleBlockClick(side, level, selected, correct, blockEl) {
-            const state = gameState[side];
-            if (level !== state.currentLevel) return;
+        // INICIALIZAR EQUIPO
+        function initTeam(side) {
+            const team = teamData[side];
+            team.score = 0;
+            team.deck = shuffle(rawVocabulary);
+            document.getElementById(`score-${side}`).innerText = "0";
 
-            if (selected === correct) {
-                // Respuesta Correcta: Marcar bloque y subir esquimal
-                blockEl.classList.add('correct-path');
-                
-                // Mover esquimal al piso superior
+            const track = document.getElementById(`track-${side}`);
+            track.innerHTML = "";
+            track.style.transform = `translateY(0vh)`;
+
+            // Renderizar los primeros 5 pisos
+            for (let i = 1; i <= 5; i++) {
+                renderNextFloor(side, i);
+            }
+
+            const climber = document.getElementById(`climber-${side}`);
+            climber.style.bottom = "2vh";
+        }
+
+        // RENDERIZAR PISO DINÁMICO EN EL CARRIL
+        function renderNextFloor(side, floorNum) {
+            const team = teamData[side];
+            const track = document.getElementById(`track-${side}`);
+            
+            // Obtener pregunta del mazo
+            const qData = team.deck[(floorNum - 1) % team.deck.length];
+
+            const floorEl = document.createElement('div');
+            floorEl.className = `floor-unit floor-${floorNum}`;
+            floorEl.dataset.floor = floorNum;
+
+            // Fila de botones/bloques (piso superior)
+            const blocksRow = document.createElement('div');
+            blocksRow.className = 'blocks-row';
+
+            const shuffledOptions = shuffle(qData.options);
+            shuffledOptions.forEach(optText => {
+                const btn = document.createElement('button');
+                btn.className = 'block-btn';
+                btn.innerText = optText;
+                btn.onclick = () => handleTap(side, floorNum, optText, qData.correct, btn);
+                blocksRow.appendChild(btn);
+            });
+
+            // Pregunta pintada en la pared
+            const questionBanner = document.createElement('div');
+            questionBanner.className = 'question-banner';
+            questionBanner.innerText = `${qData.q}`;
+
+            floorEl.appendChild(blocksRow);
+            floorEl.appendChild(questionBanner);
+            track.appendChild(floorEl);
+        }
+
+        // MANEJO DE TAP/TÁCTIL EN BLOQUES
+        function handleTap(side, floorNum, selectedOpt, correctOpt, btnEl) {
+            if (!isGameActive) return;
+            const team = teamData[side];
+
+            // Solo responder en el piso activo correspondiente
+            if (floorNum !== team.score + 1) return;
+
+            if (selectedOpt === correctOpt) {
+                sfx.playCorrect();
+                team.score++;
+                document.getElementById(`score-${side}`).innerText = team.score;
+
+                // Desplazar pista hacia abajo para efecto infinito
+                const track = document.getElementById(`track-${side}`);
+                track.style.transform = `translateY(${team.score * team.floorHeightVh}vh)`;
+
+                // Animación leve del escalador
                 const climber = document.getElementById(`climber-${side}`);
-                const totalLevels = levelsData.length;
-                const levelHeightPercent = 100 / totalLevels;
-                
-                // Posicionar verticalmente sobre el piso acertado
-                climber.style.bottom = `calc(${state.currentLevel * levelHeightPercent}% + 10px)`;
-                
-                // Desactivar nivel actual y activar el siguiente
-                const currentTier = document.querySelector(`#${side}-side .level-tier[data-level="${state.currentLevel}"]`);
-                currentTier.classList.remove('active');
+                climber.style.transform = `scale(1.2)`;
+                setTimeout(() => climber.style.transform = `scale(1)`, 200);
 
-                state.currentLevel++;
+                // Agregar el siguiente piso en la parte superior
+                renderNextFloor(side, team.score + 5);
 
-                if (state.currentLevel <= totalLevels) {
-                    const nextTier = document.querySelector(`#${side}-side .level-tier[data-level="${state.currentLevel}"]`);
-                    nextTier.classList.add('active');
-                } else {
-                    // ¡Llegó a la cima!
-                    document.getElementById(`victory-${side}`).classList.add('active');
-                }
             } else {
-                // Respuesta Incorrecta: Efecto rojo temporal
-                blockEl.classList.add('wrong-path');
-                setTimeout(() => blockEl.classList.remove('wrong-path'), 400);
+                sfx.playWrong();
+                btnEl.classList.add('wrong');
+                setTimeout(() => btnEl.classList.remove('wrong'), 400);
             }
         }
 
-        // Cargar juego para ambos lados
-        buildMountain('left');
-        buildMountain('right');
+        // INICIAR CARRERA
+        function startGame() {
+            if (isGameActive) return;
+            sfx.init();
+
+            initTeam('left');
+            initTeam('right');
+
+            isGameActive = true;
+            timeLeft = 60;
+            document.getElementById('start-btn').style.display = 'none';
+
+            gameTimer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer-display').innerText = `⏱️ ${timeLeft}s`;
+
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        // FIN DE LA CARRERA Y DECLARACIÓN DE GANADOR
+        function endGame() {
+            clearInterval(gameTimer);
+            isGameActive = false;
+
+            const scoreL = teamData.left.score;
+            const scoreR = teamData.right.score;
+
+            const overlay = document.getElementById('gameover-overlay');
+            const titleEl = document.getElementById('winner-title');
+            const detailsEl = document.getElementById('winner-details');
+
+            if (scoreL > scoreR) {
+                titleEl.innerText = "🏆 ¡VICTORIA AZUL!";
+                detailsEl.innerText = `El Equipo Azul subió ${scoreL} pisos vs ${scoreR} pisos del Equipo Rojo.`;
+            } else if (scoreR > scoreL) {
+                titleEl.innerText = "🏆 ¡VICTORIA ROJA!";
+                detailsEl.innerText = `El Equipo Rojo subió ${scoreR} pisos vs ${scoreL} pisos del Equipo Azul.`;
+            } else {
+                titleEl.innerText = "🤝 ¡EMPATE ESPECTACULAR!";
+                detailsEl.innerText = `Ambos equipos alcanzaron ${scoreL} pisos.`;
+            }
+
+            overlay.style.display = 'flex';
+        }
+
+        // Precargar tableros iniciales
+        initTeam('left');
+        initTeam('right');
     </script>
 </body>
 </html>
